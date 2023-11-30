@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "termostat"
+version = "0.0.1"
+description = "Termostat, komputeryzacja pomiarów"
+dependencies = ["matplotlib", "pyserial"]
+requires-python = ">=3.10"
+
+[project.scripts]
+termostat = "termostat.gui:main"
+
+[project.gui-scripts]
+termostat-gui = "termostat.gui:main"
