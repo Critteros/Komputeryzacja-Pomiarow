@@ -1,3 +1,3 @@
-from .gui import main
+from gui import main
 
 main()
