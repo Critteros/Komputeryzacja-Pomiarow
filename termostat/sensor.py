@@ -5,20 +5,20 @@ import sys
 import time
 from loguru import logger
 
-from .debug import DEBUG
+from debug import DEBUG
 
-from .serial import Serial
+from serial_port import SerialPort
 
 
 class Sensor:
     def __init__(self, com_port):
         # self.serial_port = Serial(port=com_port)
         if DEBUG:
-            from .mock_arduino import MockArduino
+            from mock_arduino import MockArduino
 
             self.serial_port = MockArduino()
         else:
-            self.serial_port = Serial(port=com_port)
+            self.serial_port = SerialPort(port=com_port)
 
     def __enter__(self):
         return self

@@ -1,11 +1,11 @@
 import time
 
-from .serial import Serial
+from serial_port import SerialPort
 
 
 class PSU:
     def __init__(self, com_port):
-        self.serial_port = Serial(port=com_port)
+        self.serial_port = SerialPort(port=com_port)
 
     def __enter__(self):
         return self
