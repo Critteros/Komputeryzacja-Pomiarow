@@ -53,29 +53,39 @@ MAX_WT = 16.0
 
 
 class SensorWorker(QRunnable):
-    def __init__(self, sensor: Sensor, psu: PSU) -> None:
+    def __init__(self, sensor: Sensor, psu: PSU, filename: str | None, target_t : float) -> None:
         super().__init__()
         self.signals = SensorWorkerSignals()
         self.psu = psu
         self.sensor = sensor
+        self.filename = filename
+        self.target_t = target_t
         self.running = True
 
     @pyqtSlot()
     def run(self) -> None:
         start_time = time.time()
         self.psu.set_output(True)
+        # open file
+        if self.filename:
+            file = open(self.filename, "w")
+
         try:
             while self.running:
                 logger.debug("Reading from sensor in a thread")
                 temp = self.sensor.read()
                 self.signals.data.emit(SensorData(time.time() - start_time, temp))
-                
-                if temp < 40:
+
+                if file:
+                    file.write(f"{time.time() - start_time},{temp}\n")
+                    file.flush()
+
+                if temp < self.target_t:
                     current = MAX_WT / TARGET_VOLTAGE
                     logger.debug(f"Setting wattage to {current*TARGET_VOLTAGE}")
                     self.psu.set_current(current)
 
-                if temp > 40:
+                if temp > self.target_t:
                     logger.debug("Setting wattage to 0")
                     self.psu.set_current(0.0)
 
@@ -88,6 +98,8 @@ class SensorWorker(QRunnable):
         finally:
             self.psu.close()
             self.sensor.close()
+            if file:
+                file.close()
 
 
     @pyqtSlot()

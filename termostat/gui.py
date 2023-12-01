@@ -3,9 +3,10 @@ import signal
 
 from qtmodern import styles
 from loguru import logger
+from pathlib import Path
 
-from PyQt6.QtGui import QIntValidator
-from PyQt6.QtWidgets import QPushButton, QApplication, QMainWindow, QWidget, QVBoxLayout
+from PyQt6.QtGui import QIntValidator, QDoubleValidator
+from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog
 from PyQt6.QtCore import QThreadPool
 from PyQt6 import uic
 
@@ -22,7 +23,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         # load ui
-        self.ui = uic.loadUi('D:\\IS\\Piatek08_00\\project\\termostat\\main.ui', self)
+        self.ui = uic.loadUi(Path(__file__).parent / "main.ui", self)
         self.resize(888, 600)
 
         # add plot
@@ -44,13 +45,19 @@ class MainWindow(QMainWindow):
         self.ui.comboBox_psu_port.addItems(ports)
         self.ui.comboBox_arduino_port.addItems(ports)
 
-        self.ui.lineEdit_target_t.setValidator(QIntValidator(20, 50, self))
-        # self.ui.comboBox_psu_port.setCurrentIndex(0)
-        # self.ui.comboBox_arduino_port.setCurrentIndex(0)
+        self.ui.lineEdit_target_t.setValidator(QDoubleValidator(20, 50, 1, self))
 
     def subscribe_to_window_events(self):
         self.ui.pushButton_start.clicked.connect(self.start_plot)
         self.ui.pushButton_stop.clicked.connect(self.stop_arduino)
+        self.ui.pushButton_save.clicked.connect(self.open_file_dialog)
+
+    def open_file_dialog(self):
+        self.filename, _ = QFileDialog.getOpenFileName(
+            self, "Save File", "", "CSV (*.csv)"
+        )
+
+        logger.debug(f"Selected file: {self.filename}")
 
     def start_plot(self):
         self.disable_controls()
@@ -61,9 +68,15 @@ class MainWindow(QMainWindow):
         # start worker
         psu_port = self.ui.comboBox_psu_port.currentText()
         arduino_port = self.ui.comboBox_arduino_port.currentText()
+        target_t = float(self.ui.lineEdit_target_t.text())
 
         logger.debug(f"Starting arduino on port {arduino_port}")
-        self.arduino_thread = SensorWorker(Sensor(arduino_port), PSU(psu_port))
+        self.arduino_thread = SensorWorker(
+            Sensor(arduino_port),
+            PSU(psu_port),
+            self.filename if self.filename else None,
+            target_t,
+        )
         self.arduino_thread.setAutoDelete(True)
         self.arduino_thread.signals.data.connect(self.on_arduino_data)
         self.arduino_thread.signals.error.connect(self.on_worker_error)
