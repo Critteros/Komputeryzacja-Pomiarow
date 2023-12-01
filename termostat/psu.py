@@ -1,6 +1,6 @@
 import time
 
-from serial_port import SerialPort
+from .serial_port import SerialPort
 
 
 class PSU:

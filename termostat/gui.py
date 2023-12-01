@@ -1,18 +1,18 @@
 import sys
 import signal
 
-from PyQt6.QtGui import QIntValidator
 from qtmodern import styles
 from loguru import logger
 
+from PyQt6.QtGui import QIntValidator
 from PyQt6.QtWidgets import QPushButton, QApplication, QMainWindow, QWidget, QVBoxLayout
 from PyQt6.QtCore import QThreadPool
 from PyQt6 import uic
 
-from plot import Plot
+from .plot import Plot
 
-from sensor import SensorWorker, SensorData, Sensor
-from serial_port import get_port_list
+from .sensor import SensorWorker, SensorData, Sensor
+from .serial_port import get_port_list
 
 
 class MainWindow(QMainWindow):
@@ -20,7 +20,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         # load ui
-        self.ui = uic.loadUi('termostat/main.ui', self)
+        self.ui = uic.loadUi('D:\\IS\\Piatek08_00\\project\\termostat\\main.ui', self)
         self.resize(888, 600)
 
         # add plot
@@ -47,10 +47,10 @@ class MainWindow(QMainWindow):
         # self.ui.comboBox_arduino_port.setCurrentIndex(0)
 
     def subscribe_to_window_events(self):
-        self.ui.pushButton_start.clicked.connect(self.start_arduino)
+        self.ui.pushButton_start.clicked.connect(self.start_plot)
         self.ui.pushButton_stop.clicked.connect(self.stop_arduino)
 
-    def start_arduino(self):
+    def start_plot(self):
         self.disable_controls()
 
         # clear port
@@ -60,15 +60,14 @@ class MainWindow(QMainWindow):
         arduino_port = self.ui.comboBox_arduino_port.currentText()
 
         logger.debug(f"Starting arduino on port {arduino_port}")
-        with Sensor(arduino_port) as sensor:
-            self.arduino_thread = SensorWorker(sensor)
-            self.arduino_thread.signals.data.connect(self.on_arduino_data)
-            self.arduino_thread.signals.error.connect(self.on_worker_error)
-            self.arduino_thread.signals.finished.connect(
-                lambda: logger.debug("Arduino thread finished")
-            )
+        self.arduino_thread = SensorWorker(Sensor(arduino_port))
+        self.arduino_thread.signals.data.connect(self.on_arduino_data)
+        self.arduino_thread.signals.error.connect(self.on_worker_error)
+        self.arduino_thread.signals.finished.connect(
+            lambda: logger.debug("Arduino thread finished")
+        )
 
-            self.threadpool.start(self.arduino_thread)
+        self.threadpool.start(self.arduino_thread)
 
     def stop_arduino(self):
         # unblock controls

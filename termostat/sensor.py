@@ -5,16 +5,16 @@ import sys
 import time
 from loguru import logger
 
-from debug import DEBUG
+from .debug import DEBUG
 
-from serial_port import SerialPort
+from .serial_port import SerialPort
 
 
 class Sensor:
     def __init__(self, com_port):
         # self.serial_port = Serial(port=com_port)
         if DEBUG:
-            from mock_arduino import MockArduino
+            from .mock_arduino import MockArduino
 
             self.serial_port = MockArduino()
         else:
@@ -24,6 +24,9 @@ class Sensor:
         return self
 
     def __exit__(self, type, value, traceback):
+        self.serial_port.close()
+
+    def close(self):
         self.serial_port.close()
 
     def read(self):
@@ -68,3 +71,4 @@ class SensorWorker(QRunnable):
     def stop_worker(self):
         logger.debug("Stopping arduino thread")
         self.running = False
+        self.sensor.close()
