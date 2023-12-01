@@ -9,6 +9,8 @@ from PyQt6.QtWidgets import QPushButton, QApplication, QMainWindow, QWidget, QVB
 from PyQt6.QtCore import QThreadPool
 from PyQt6 import uic
 
+from .psu import PSU
+
 from .plot import Plot
 
 from .sensor import SensorWorker, SensorData, Sensor
@@ -57,10 +59,12 @@ class MainWindow(QMainWindow):
         self.plot.clear_plot()
 
         # start worker
+        psu_port = self.ui.comboBox_psu_port.currentText()
         arduino_port = self.ui.comboBox_arduino_port.currentText()
 
         logger.debug(f"Starting arduino on port {arduino_port}")
-        self.arduino_thread = SensorWorker(Sensor(arduino_port))
+        self.arduino_thread = SensorWorker(Sensor(arduino_port), PSU(psu_port))
+        self.arduino_thread.setAutoDelete(True)
         self.arduino_thread.signals.data.connect(self.on_arduino_data)
         self.arduino_thread.signals.error.connect(self.on_worker_error)
         self.arduino_thread.signals.finished.connect(
@@ -70,11 +74,11 @@ class MainWindow(QMainWindow):
         self.threadpool.start(self.arduino_thread)
 
     def stop_arduino(self):
-        # unblock controls
-        self.enable_controls()
-
         # stop worker
         self.arduino_thread.stop_worker()
+
+        # unblock controls
+        self.enable_controls()
 
     def enable_controls(self):
         self.ui.comboBox_psu_port.setEnabled(True)

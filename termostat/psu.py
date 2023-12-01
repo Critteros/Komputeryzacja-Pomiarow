@@ -11,6 +11,9 @@ class PSU:
         return self
 
     def __exit__(self, type, value, traceback):
+       self.close()
+
+    def close(self):
         self.set_output(False)
         self.serial_port.close()
 

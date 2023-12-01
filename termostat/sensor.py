@@ -3,7 +3,10 @@ from typing import NamedTuple
 import traceback
 import sys
 import time
+import serial
 from loguru import logger
+
+from .psu import PSU
 
 from .debug import DEBUG
 
@@ -45,30 +48,51 @@ class SensorWorkerSignals(QObject):
     data = pyqtSignal(SensorData)
 
 
+TARGET_VOLTAGE = 8.0
+MAX_WT = 16.0
+
+
 class SensorWorker(QRunnable):
-    def __init__(self, sensor: Sensor) -> None:
+    def __init__(self, sensor: Sensor, psu: PSU) -> None:
         super().__init__()
         self.signals = SensorWorkerSignals()
+        self.psu = psu
         self.sensor = sensor
         self.running = True
 
     @pyqtSlot()
     def run(self) -> None:
         start_time = time.time()
+        self.psu.set_output(True)
         try:
             while self.running:
                 logger.debug("Reading from sensor in a thread")
                 temp = self.sensor.read()
                 self.signals.data.emit(SensorData(time.time() - start_time, temp))
+                
+                if temp < 40:
+                    current = MAX_WT / TARGET_VOLTAGE
+                    logger.debug(f"Setting wattage to {current*TARGET_VOLTAGE}")
+                    self.psu.set_current(current)
+
+                if temp > 40:
+                    logger.debug("Setting wattage to 0")
+                    self.psu.set_current(0.0)
+
+        except ValueError:
+            pass
         except Exception:
             traceback.print_exc()
             exctype, value = sys.exc_info()[:2]
             self.signals.error.emit((exctype, value, traceback.format_exc()))
         finally:
-            self.signals.finished.emit()
+            self.psu.close()
+            self.sensor.close()
+
 
     @pyqtSlot()
     def stop_worker(self):
         logger.debug("Stopping arduino thread")
         self.running = False
-        self.sensor.close()
+        self.signals.finished.emit()
+       
