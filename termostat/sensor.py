@@ -66,6 +66,9 @@ class SensorWorker(QRunnable):
     def run(self) -> None:
         start_time = time.time()
         self.psu.set_output(True)
+
+        file = None
+
         # open file
         if self.filename:
             file = open(self.filename, "w")

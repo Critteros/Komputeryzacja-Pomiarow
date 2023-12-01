@@ -5,7 +5,7 @@ from qtmodern import styles
 from loguru import logger
 from pathlib import Path
 
-from PyQt6.QtGui import QIntValidator, QDoubleValidator
+from PyQt6.QtGui import QDoubleValidator, QValidator
 from PyQt6.QtWidgets import QApplication, QMainWindow, QFileDialog
 from PyQt6.QtCore import QThreadPool
 from PyQt6 import uic
@@ -53,28 +53,46 @@ class MainWindow(QMainWindow):
         self.ui.pushButton_save.clicked.connect(self.open_file_dialog)
 
     def open_file_dialog(self):
-        self.filename, _ = QFileDialog.getOpenFileName(
+        # allow non existing file names
+        self.filename, _ = QFileDialog.getSaveFileName(
             self, "Save File", "", "CSV (*.csv)"
         )
 
         logger.debug(f"Selected file: {self.filename}")
 
     def start_plot(self):
+
+        # validate
+        valid = self.ui.lineEdit_target_t.validator().validate(self.ui.lineEdit_target_t.text(), 0)[0]
+        match valid: 
+            case QValidator.State.Acceptable:
+                logger.debug("Target temperature is valid")
+            case QValidator.State.Intermediate:
+                self.ui.lineEdit_target_t.setStyleSheet("background-color: yellow")
+                logger.debug("Target temperature is intermediate")
+                return
+            case QValidator.State.Invalid:
+                self.ui.lineEdit_target_t.setStyleSheet("background-color: red")
+                logger.debug("Target temperature is invalid")
+                return
+            
+        # prepare ui
         self.disable_controls()
 
         # clear port
         self.plot.clear_plot()
-
-        # start worker
+        
+        # gather data
         psu_port = self.ui.comboBox_psu_port.currentText()
         arduino_port = self.ui.comboBox_arduino_port.currentText()
         target_t = float(self.ui.lineEdit_target_t.text())
 
+        # start worker
         logger.debug(f"Starting arduino on port {arduino_port}")
         self.arduino_thread = SensorWorker(
             Sensor(arduino_port),
             PSU(psu_port),
-            self.filename if self.filename else None,
+            getattr(self, "filename", None),
             target_t,
         )
         self.arduino_thread.setAutoDelete(True)
