@@ -26,6 +26,9 @@ class MainWindow(QMainWindow):
         self.ui = uic.loadUi(Path(__file__).parent / "main.ui", self)
         self.resize(888, 600)
 
+        # hide validation error
+        self.ui.label_validation_error.setVisible(False)
+
         # add plot
         self.plot = Plot()
         self.ui.gridLayout_4.addWidget(self.plot, 2, 1, 1, 1)
@@ -63,19 +66,24 @@ class MainWindow(QMainWindow):
     def start_plot(self):
 
         # validate
+        if self.ui.comboBox_psu_port.currentText() == self.ui.comboBox_arduino_port.currentText():
+            self.ui.label_validation_error.setVisible(True)
+            self.ui.label_validation_error.setText("PSU and Arduino ports must be different")
+            return
+
         valid = self.ui.lineEdit_target_t.validator().validate(self.ui.lineEdit_target_t.text(), 0)[0]
+        print(valid)
         match valid: 
             case QValidator.State.Acceptable:
                 logger.debug("Target temperature is valid")
-            case QValidator.State.Intermediate:
-                self.ui.lineEdit_target_t.setStyleSheet("background-color: yellow")
-                logger.debug("Target temperature is intermediate")
-                return
-            case QValidator.State.Invalid:
-                self.ui.lineEdit_target_t.setStyleSheet("background-color: red")
-                logger.debug("Target temperature is invalid")
+            case QValidator.State.Intermediate | QValidator.State.Invalid:
+                self.ui.label_validation_error.setVisible(True)
+                self.ui.label_validation_error.setText("Target temperature is required and must be in range 20-50")
                 return
             
+        self.ui.label_validation_error.setText("")
+        self.ui.label_validation_error.setVisible(False)
+        
         # prepare ui
         self.disable_controls()
 
