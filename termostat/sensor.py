@@ -77,7 +77,10 @@ class SensorWorker(QRunnable):
         if self.filename:
             file = open(self.filename, "w")
 
+        self.psu.set_voltage(TARGET_VOLTAGE)
+        
         try:
+
             while self.running:
                 logger.debug("Reading from sensor in a thread")
                 temp = self.sensor.read()
@@ -93,6 +96,9 @@ class SensorWorker(QRunnable):
                     "Setting wattage to {}", nex_power_value, feature="f-strings"
                 )
                 current = nex_power_value / TARGET_VOLTAGE
+                logger.debug(
+                    "!!!!!!!!!!!!!!!!!!!!Setting current to {}", current, feature="f-strings"
+                )
                 self.psu.set_current(current)
 
         except ValueError:

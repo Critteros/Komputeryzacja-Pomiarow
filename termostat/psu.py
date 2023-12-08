@@ -4,7 +4,6 @@ from .serial_port import SerialPort
 
 from .debug import DEBUG
 
-
 class PSU:
     def __init__(self, com_port):
         if DEBUG:
@@ -76,7 +75,8 @@ class PSU:
 
     def set_current(self, current_value):
         # Construct the command to set the voltage
-        command = f"ISET1:{current_value}"
+        command = f"ISET1:{current_value:.2f}"
+        print(command)
 
         # Send the command to the Rokad Power device
         self.serial_port.write(command.encode())

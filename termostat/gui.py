@@ -32,6 +32,7 @@ class MainWindow(QMainWindow):
         # add plot
         self.plot = Plot()
         self.ui.gridLayout_4.addWidget(self.plot, 2, 1, 1, 1)
+        self.ui.gridLayout_4.setContentsMargins(1,1,1,1)
         self.plot.setStyleSheet("background-color:transparent;")
 
         # init threadpool

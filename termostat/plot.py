@@ -13,6 +13,8 @@ class Plot(FigureCanvas):
     ):
 
         self.color = 'darkgrey'
+        self.y_min = 20
+        self.y_max = 40
 
         self.fig = Figure(figsize=(5, 4), dpi=100)
         # colors
@@ -24,6 +26,7 @@ class Plot(FigureCanvas):
         self.ax.spines['left'].set_color(self.color)
         self.ax.tick_params(axis='x', colors=self.color)
         self.ax.tick_params(axis='y', colors=self.color)
+        # self.ax.set_ylim(self.y_min, self.y_max)
 
         super(Plot, self).__init__(self.fig)
 
@@ -57,8 +60,8 @@ class Plot(FigureCanvas):
         self.ax.clear()
         self.ax.set_xlabel(self.x_label, color=self.color)
         self.ax.set_ylabel(self.y_label, color=self.color)
-        self.ax.autoscale_view(True, True, True)
-
+        self.ax.autoscale_view(True, True, False)
+        # self.ax.set_ylim(self.y_min, self.y_max)
         self.ax.patch.set_alpha(0)
 
     def clear_plot(self):
@@ -70,5 +73,6 @@ class Plot(FigureCanvas):
         self.reset_plot()
         self.ax.plot(self._x_data, self._y_data, color='slateblue')
         self.ax.relim()
+        # self.ax.set_ylim(self.y_min, self.y_max)
 
         self.draw()
