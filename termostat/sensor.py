@@ -11,6 +11,8 @@ from .debug import DEBUG
 
 from .serial_port import SerialPort
 
+from .pid_controller import PidController
+
 
 class Sensor:
     def __init__(self, com_port):
@@ -67,6 +69,7 @@ class SensorWorker(QRunnable):
     def run(self) -> None:
         start_time = time.time()
         self.psu.set_output(True)
+        pid = PidController(target_temperature=self.target_t, max_power=MAX_WT)
 
         file = None
 
@@ -84,14 +87,13 @@ class SensorWorker(QRunnable):
                     file.write(f"{time.time() - start_time},{temp}\n")
                     file.flush()
 
-                if temp < self.target_t:
-                    current = MAX_WT / TARGET_VOLTAGE
-                    logger.debug(f"Setting wattage to {current*TARGET_VOLTAGE}")
-                    self.psu.set_current(current)
+                nex_power_value = pid.get_power_value(temp)
 
-                if temp > self.target_t:
-                    logger.debug("Setting wattage to 0")
-                    self.psu.set_current(0.0)
+                logger.debug(
+                    "Setting wattage to {}", nex_power_value, feature="f-strings"
+                )
+                current = nex_power_value / TARGET_VOLTAGE
+                self.psu.set_current(current)
 
         except ValueError:
             pass
