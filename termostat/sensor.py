@@ -3,7 +3,6 @@ from typing import NamedTuple
 import traceback
 import sys
 import time
-import serial
 from loguru import logger
 
 from .psu import PSU
@@ -53,7 +52,9 @@ MAX_WT = 16.0
 
 
 class SensorWorker(QRunnable):
-    def __init__(self, sensor: Sensor, psu: PSU, filename: str | None, target_t : float) -> None:
+    def __init__(
+        self, sensor: Sensor, psu: PSU, filename: str | None, target_t: float
+    ) -> None:
         super().__init__()
         self.signals = SensorWorkerSignals()
         self.psu = psu
@@ -104,10 +105,8 @@ class SensorWorker(QRunnable):
             if file:
                 file.close()
 
-
     @pyqtSlot()
     def stop_worker(self):
         logger.debug("Stopping arduino thread")
         self.running = False
         self.signals.finished.emit()
-       

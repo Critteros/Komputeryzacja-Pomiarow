@@ -2,16 +2,23 @@ import time
 
 from .serial_port import SerialPort
 
+from .debug import DEBUG
+
 
 class PSU:
     def __init__(self, com_port):
-        self.serial_port = SerialPort(port=com_port)
+        if DEBUG:
+            from .mock_psu import MockPSU
+
+            self.serial_port = MockPSU()
+        else:
+            self.serial_port = SerialPort(port=com_port)
 
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
-       self.close()
+        self.close()
 
     def close(self):
         self.set_output(False)
