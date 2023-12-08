@@ -6,7 +6,15 @@ build-backend = "setuptools.build_meta"
 name = "termostat"
 version = "0.0.1"
 description = "Termostat, komputeryzacja pomiarów"
-dependencies = ["matplotlib", "pyserial", "PyQt6", "qtmodern", "loguru", "pyqt6-tools"]
+dependencies = [
+  "matplotlib",
+  "pyserial",
+  "PyQt6",
+  "qtmodern",
+  "loguru",
+  "pyqt6-tools",
+  "simple-pid",
+]
 requires-python = ">=3.10"
 
 [project.scripts]
